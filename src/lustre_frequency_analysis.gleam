@@ -3,9 +3,8 @@ import gleam/float
 import gleam/int
 import gleam/list
 
-import lustre/ui
-
 import lustre
+import lustre/attribute
 import lustre/element
 import lustre/element/html
 import lustre/event
@@ -45,30 +44,29 @@ fn view(model: Model) -> element.Element(Msg) {
   let total_chars =
     frequency_list |> list.map(fn(frequency) { frequency.1 }) |> int.sum
 
-  ui.centre(
-    [],
-    ui.stack([], [
-      html.h1([], [element.text("Lustre Frequency Analysis")]),
-      html.textarea([event.on_input(Add)], model.input),
-      ui.button([event.on_click(Remove)], [element.text("Remove")]),
-      html.p([], [element.text(model.input)]),
-      html.ul(
-        [],
-        frequency_list
-          |> list.map(fn(frequency) -> element.Element(Msg) {
-            let #(grapheme, count) = frequency
-            html.li([], [
-              element.text(grapheme <> ": " <> int.to_string(count)),
-              html.div([], [
-                element.text(
-                  float.to_string(float_to_percentile(
-                    int.to_float(count) /. int.to_float(total_chars),
-                  )),
-                ),
-              ]),
-            ])
-          }),
-      ),
+  html.main([attribute.class("bg-slate-100 p-8")], [
+    html.h1([attribute.class("text-2xl")], [
+      element.text("Lustre Frequency Analysis"),
     ]),
-  )
+    html.textarea([event.on_input(Add)], model.input),
+    html.div(
+      [attribute.class("flex flex-wrap space-x-4")],
+      frequency_list
+        |> list.map(fn(frequency) -> element.Element(Msg) {
+          let #(grapheme, count) = frequency
+          html.div([attribute.class("w-16 py-2")], [
+            element.text(grapheme <> ": " <> int.to_string(count)),
+            html.p([], [
+              element.text(
+                float.to_string(float_to_percentile(
+                  int.to_float(count) /. int.to_float(total_chars),
+                ))
+                <> "%",
+              ),
+            ]),
+            html.input([attribute.class("w-8")]),
+          ])
+        }),
+    ),
+  ])
 }
