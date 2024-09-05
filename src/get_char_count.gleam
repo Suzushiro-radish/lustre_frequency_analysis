@@ -4,20 +4,13 @@ import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/string
 
-pub fn get_char_count(text: String) -> Dict(String, Int) {
-  let grapheme_list =
-    list.range(char_to_charcode("A"), char_to_charcode("Z"))
-    |> list.map(fn(code) { string.utf_codepoint(code) })
-    |> list.map(fn(c) {
-      case c {
-        Ok(grapheme) -> [grapheme] |> string.from_utf_codepoints
-        Error(_) -> ""
-      }
-    })
-    |> list.filter(fn(c) { c != "" })
+pub const alphabets = [
+  "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P",
+  "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
+]
 
-  let grapheme_dict =
-    dict.from_list(grapheme_list |> list.map(fn(c) { #(c, 0) }))
+pub fn get_char_count(text: String) -> Dict(String, Int) {
+  let grapheme_dict = dict.from_list(alphabets |> list.map(fn(c) { #(c, 0) }))
 
   text
   |> string.uppercase
