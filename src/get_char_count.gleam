@@ -13,9 +13,11 @@ pub fn get_char_count(text: String) -> Dict(String, Int) {
         Ok(grapheme) -> [grapheme] |> string.from_utf_codepoints
         Error(_) -> ""
       }
-    }) |> list.filter(fn(c) { c != "" })
+    })
+    |> list.filter(fn(c) { c != "" })
 
-    let grapheme_dict = dict.from_list(grapheme_list |> list.map(fn(c) { #(c, 0) }))
+  let grapheme_dict =
+    dict.from_list(grapheme_list |> list.map(fn(c) { #(c, 0) }))
 
   text
   |> string.uppercase
