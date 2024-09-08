@@ -4,7 +4,8 @@ import gleam/list
 import gleeunit
 import gleeunit/should
 
-import get_char_count.{alphabets, get_char_count}
+import get_char_count.{get_char_count}
+import constants.{alphabets}
 
 pub fn main() {
   gleeunit.main()

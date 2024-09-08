@@ -1,7 +1,11 @@
 import gleam/dict.{type Dict}
+import gleam/dynamic
 import gleam/float
 import gleam/int
+import gleam/io
 import gleam/list
+import gleam/result
+import gleam/string
 
 import lustre
 import lustre/attribute
@@ -20,22 +24,39 @@ pub fn main() {
 }
 
 type Model {
-  Model(input: String, frequency_map: Dict(String, Int))
+  Model(
+    input: String,
+    frequency_map: Dict(String, Int),
+    substitution: Dict(String, String),
+  )
 }
 
 fn init(initial_str: String) -> Model {
-  Model(input: initial_str, frequency_map: get_char_count(initial_str))
+  Model(
+    input: initial_str,
+    frequency_map: get_char_count(initial_str),
+    substitution: dict.new(),
+  )
 }
 
 pub type Msg {
-  Add(txt: String)
-  Remove
+  Add(String)
+  Calculate
+  ChangeTargetChar(source: String, target: String)
 }
 
-fn update(_model: Model, msg: Msg) -> Model {
+fn update(model: Model, msg: Msg) -> Model {
   case msg {
-    Add(txt) -> Model(txt, get_char_count(txt))
-    Remove -> Model(input: "", frequency_map: dict.new())
+    Add(txt) ->
+      Model(model.input <> txt, model.frequency_map, model.substitution)
+    Calculate ->
+      Model(model.input, get_char_count(model.input), model.substitution)
+    ChangeTargetChar(source, target) ->
+      Model(
+        model.input,
+        model.frequency_map,
+        model.substitution |> dict.upsert(source, fn(_) { target }),
+      )
   }
 }
 
@@ -44,11 +65,33 @@ fn view(model: Model) -> element.Element(Msg) {
   let total_chars =
     frequency_list |> list.map(fn(frequency) { frequency.1 }) |> int.sum
 
+  let change_target_char = fn(event) {
+    use target <- result.try(dynamic.field("target", dynamic.dynamic)(event))
+    use key <- result.try(dynamic.field("name", dynamic.string)(target))
+    use value <- result.try(dynamic.field("value", dynamic.string)(target))
+
+    case string.length(value) {
+      1 -> ChangeTargetChar(key, value)
+      0 -> ChangeTargetChar(key, "")
+      _ -> ChangeTargetChar(key, string.first(value) |> result.unwrap(""))
+    }
+    |> Ok
+  }
+
   html.main([attribute.class("bg-slate-100 p-8")], [
     html.h1([attribute.class("text-2xl")], [
       element.text("Lustre Frequency Analysis"),
     ]),
-    html.textarea([event.on_input(Add)], model.input),
+    // Input for source text.
+    html.textarea(
+      [event.on_input(Add), attribute.class("w-full h-40")],
+      model.input,
+    ),
+    // Buttons for calculating the frequency of characters.
+    html.button(
+      [event.on_click(Calculate), attribute.class("bg-blue-500 text-white p-2")],
+      [element.text("Calculate")],
+    ),
     html.div(
       [attribute.class("flex flex-wrap space-x-4")],
       frequency_list
@@ -64,7 +107,15 @@ fn view(model: Model) -> element.Element(Msg) {
                 <> "%",
               ),
             ]),
-            html.input([attribute.class("w-8")]),
+            html.input([
+              attribute.name(grapheme),
+              event.on("input", change_target_char),
+              attribute.class("w-8"),
+              attribute.value(
+                model.substitution |> dict.get(grapheme) |> result.unwrap(""),
+              ),
+              attribute.max("1"),
+            ]),
           ])
         }),
     ),

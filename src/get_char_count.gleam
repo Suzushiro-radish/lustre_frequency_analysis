@@ -1,13 +1,10 @@
+import constants.{alphabets}
 import gleam/dict.{type Dict}
 import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/string
 
-pub const alphabets = [
-  "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P",
-  "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
-]
 
 pub fn get_char_count(text: String) -> Dict(String, Int) {
   let grapheme_dict = dict.from_list(alphabets |> list.map(fn(c) { #(c, 0) }))
