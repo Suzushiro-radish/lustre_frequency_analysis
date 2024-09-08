@@ -2,7 +2,6 @@ import gleam/dict.{type Dict}
 import gleam/dynamic
 import gleam/float
 import gleam/int
-import gleam/io
 import gleam/list
 import gleam/result
 import gleam/string
@@ -28,6 +27,7 @@ type Model {
     input: String,
     frequency_map: Dict(String, Int),
     substitution: Dict(String, String),
+    output: String,
   )
 }
 
@@ -36,6 +36,7 @@ fn init(initial_str: String) -> Model {
     input: initial_str,
     frequency_map: get_char_count(initial_str),
     substitution: dict.new(),
+    output: "",
   )
 }
 
@@ -43,19 +44,33 @@ pub type Msg {
   Add(String)
   Calculate
   ChangeTargetChar(source: String, target: String)
+  Substitute
 }
 
 fn update(model: Model, msg: Msg) -> Model {
   case msg {
     Add(txt) ->
-      Model(model.input <> txt, model.frequency_map, model.substitution)
+      Model(txt, model.frequency_map, model.substitution, model.output)
     Calculate ->
-      Model(model.input, get_char_count(model.input), model.substitution)
+      Model(
+        model.input,
+        get_char_count(model.input),
+        model.substitution,
+        model.output,
+      )
     ChangeTargetChar(source, target) ->
       Model(
         model.input,
         model.frequency_map,
         model.substitution |> dict.upsert(source, fn(_) { target }),
+        model.output,
+      )
+    Substitute ->
+      Model(
+        model.input,
+        model.frequency_map,
+        model.substitution,
+        substitute(model.input, model.substitution),
       )
   }
 }
@@ -119,5 +134,28 @@ fn view(model: Model) -> element.Element(Msg) {
           ])
         }),
     ),
+    html.button(
+      [
+        event.on_click(Substitute),
+        attribute.class("bg-blue-500 text-white p-2"),
+      ],
+      [element.text("Substitute")],
+    ),
+    html.textarea(
+      [attribute.readonly(True), attribute.class("w-full h-40")],
+      model.output,
+    ),
   ])
+}
+
+fn substitute(src: String, substitution_map: Dict(String, String)) -> String {
+  src
+  |> string.to_graphemes
+  |> list.map(fn(grapheme) -> String {
+    case dict.get(substitution_map, grapheme) {
+      Ok(substitution) -> substitution
+      _ -> grapheme
+    }
+  })
+  |> string.concat
 }
