@@ -5,7 +5,6 @@ import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/string
 
-
 pub fn get_char_count(text: String) -> Dict(String, Int) {
   let grapheme_dict = dict.from_list(alphabets |> list.map(fn(c) { #(c, 0) }))
 
